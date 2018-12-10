@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>REM calculator</title>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+    <style type="text/css">
+        html, body {
+            font-family: 'Open Sans', sans-serif;
+        }
+        .popup__overlay {
+            position: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0, 0.7);
+        }
+
+        .popup {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            width: 300px;
+            background: #e3e3e3;
+            border-radius: 15px;
+        }
+
+        .popup input[type="text"] {
+            margin: 15px 0 20px;
+            height: 50px;
+            font-size: 30px;
+            font-weight: 700;
+            border-radius: 25px;
+            border: none;
+            text-align: center;
+        }
+
+        .popup input[type="text"]:focus {
+            outline: none;
+        }
+
+        .popup a {
+            display: inline-block;
+            padding: 10px 20px;
+            color: #000;
+            border: none;
+            background: #FFD40D;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-weight: 700;
+            border-radius: 23px;
+        }
+
+        .inputsWrap {
+            display: flex;
+            padding: 5px;
+            border: 1px solid #e3e3e3;
+            width: 200px;
+        }
+
+        .inputsWrap--pt,
+        .inputsWrap--px {
+            display: none;
+        }
+
+        [data-unit="points"] .inputsWrap--pt {
+            display: flex;
+        }
+
+        [data-unit="pixels"] .inputsWrap--px {
+            display: flex;
+        }        
+
+        .inputsWrap input[type="text"] {
+            width: 70px;
+        }
+
+        .selectWrap {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .selectWrap label {
+            margin-right: 10px;
+        }
+
+        label {
+            flex: 1;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        .rem-value {
+            opacity: 0.3;
+        }
+
+        .reset-rems {
+            display: inline-block;
+            padding: 5px;
+            margin-top: 30px;
+            text-decoration: none;
+            font-size: 12px;
+            color: #e3e3e3;
+            border: 1px solid #e3e3e3;
+        }
+    </style>
+</head>
+<body>
+    <div class="popup__overlay">
+        <div class="popup">
+            <label>What is the font-size of your html tag?</label>
+            <input type="text" name="rem-default" class="rem-default" />
+            <label>How many decimals do you want?</label>
+            <input type="text" name="decimals" class="decimals" />
+            <div class="selectWrap">
+                <label>Select Unit:</label>
+                <select class="unit">
+                    <option value="pixels">Pixels</option>
+                    <option value="points">Points</option>
+                </select>
+            </div><!-- end selectWrap -->
+            <a href="#" class="set-rems">Go, convert those PX/PTs!</a>
+        </div><!-- end popup -->
+    </div><!-- end popup__overlay -->
+    <div class="inputsWrap">
+        <label>1 Rem value:</label>
+        <span class="rem-value"><span>
+    </div>
+    <div class="inputsWrap inputsWrap--px">
+        <label>Pixels:</label>
+        <input type="text" name="rem" class="input-value" />
+    </div>
+    <div class="inputsWrap inputsWrap--pt">
+        <label>Points:</label>
+        <input type="text" name="rem" class="input-value-pt" />
+    </div>    
+    <div class="inputsWrap">
+        <label>Result:</label>
+        <input type="text" name="rem" class="result" />
+    </div>
+    <a href="#" class="reset-rems">Reset settings</a>
+
+    <script type="text/javascript">
+        const remInput = document.querySelector('.rem-value');
+        const pixelInput = document.querySelector('.input-value');
+        const pointInput = document.querySelector('.input-value-pt');
+        const resultInput = document.querySelector('.result');
+        const defaultRemsInput = document.querySelector('.rem-default');
+        const decimalsInput = document.querySelector('.decimals');
+        const unitInput = document.querySelector('.unit');
+        const resetRemInput = document.querySelector('.reset-rems');
+        const popup = document.querySelector('.popup__overlay');
+        let unit = 'pixels';
+
+        let settings = JSON.parse(localStorage.getItem('remSettings')) || null;
+
+        if ( settings !== null ) {
+            popup.classList.add('hide');
+            if ( settings.unit !== null ) {
+                unit = settings.unit;
+            }
+        }
+
+        document.body.dataset.unit = unit;
+
+        pixelInput.focus();
+
+        remInput.textContent = (settings !== null) ? settings.rems : 0;
+
+        function setRems(e) {
+            settings = {
+                rems: defaultRemsInput.value,
+                decimals: decimalsInput.value,
+                unit: unitInput.options[unitInput.selectedIndex].value
+            };
+            localStorage.setItem('remSettings', JSON.stringify(settings));
+            popup.classList.add('hide');
+            remInput.textContent = settings.rems;
+            document.body.dataset.unit = settings.unit;
+            pixelInput.focus();
+            e.preventDefault();
+        }
+
+        function calculate(decimals = 5) {
+            let input = parseFloat(pixelInput.value);
+            let inputPt = parseFloat(pointInput.value);
+            let rems = parseFloat(remInput.textContent);
+            let result;
+
+            if ( settings.unit == 'pixels' ) {
+                result = (input / rems).toFixed(settings.decimals);
+            } else {
+                result = ( inputPt / (rems * 0.75) ).toFixed(settings.decimals);
+                console.log(`inputPt: ${inputPt}`);
+                console.log(`rems: ${rems}`);
+                console.log('rems * 0.75: ' + rems * 0.75);
+            }
+
+            resultInput.value = result + 'rem';
+        }
+
+        pixelInput.addEventListener('blur', function() {
+            calculate();
+        });
+
+        pointInput.addEventListener('blur', function() {
+            calculate();
+        });
+
+        document.querySelector('.set-rems').addEventListener('click', setRems);
+
+        resetRemInput.addEventListener('click', function(e) {
+            popup.classList.remove('hide');
+            e.preventDefault();
+        })
+
+        resultInput.addEventListener('blur', function() {
+            pixelInput.focus();
+        })
+
+
+    </script>
+</body>
+</html>
